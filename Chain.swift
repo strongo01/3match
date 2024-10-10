@@ -1,5 +1,5 @@
 class Chain: Hashable, CustomStringConvertible {
-  var cookies: [Cookie] = []
+  var fruits: [fruit] = []
   var score = 0
   
   enum ChainType: CustomStringConvertible {
@@ -19,31 +19,31 @@ class Chain: Hashable, CustomStringConvertible {
     self.chainType = chainType
   }
   
-  func add(cookie: Cookie) {
-    cookies.append(cookie)
+  func add(fruit: fruit) {
+    fruits.append(fruit)
   }
   
-  func firstCookie() -> Cookie {
-    return cookies[0]
+  func firstfruit() -> fruit {
+    return fruits[0]
   }
   
-  func lastCookie() -> Cookie {
-    return cookies[cookies.count - 1]
+  func lastfruit() -> fruit {
+    return fruits[fruits.count - 1]
   }
   
   var length: Int {
-    return cookies.count
+    return fruits.count
   }
   
   var description: String {
-    return "type:\(chainType) cookies:\(cookies)"
+    return "type:\(chainType) fruits:\(fruits)"
   }
   
   var hashValue: Int {
-    return cookies.reduce (0) { $0.hashValue ^ $1.hashValue }
+    return fruits.reduce (0) { $0.hashValue ^ $1.hashValue }
   }
   
   static func ==(lhs: Chain, rhs: Chain) -> Bool {
-    return lhs.cookies == rhs.cookies
+    return lhs.fruits == rhs.fruits
   }
 }

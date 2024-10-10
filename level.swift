@@ -5,7 +5,7 @@ let numRows = 9
 let numLevels = 4
 
 class Level {
-  private var cookies = Array2D<Cookie>(columns: numColumns, rows: numRows)
+  private var fruits = Array2D<fruit>(columns: numColumns, rows: numRows)
   private var tiles = Array2D<Tile>(columns: numColumns, rows: numRows)
   private var possibleSwaps: Set<Swap> = []
   private var comboMultiplier = 0
@@ -34,10 +34,10 @@ class Level {
     maximumMoves = levelData.moves
   }
   
-  func cookie(atColumn column: Int, row: Int) -> Cookie? {
+  func fruit(atColumn column: Int, row: Int) -> fruit? {
     precondition(column >= 0 && column < numColumns)
     precondition(row >= 0 && row < numRows)
-    return cookies[column, row]
+    return fruits[column, row]
   }
   
   func tileAt(column: Int, row: Int) -> Tile? {
@@ -46,10 +46,10 @@ class Level {
     return tiles[column, row]
   }
   
-  func shuffle() -> Set<Cookie> {
-    var set: Set<Cookie>
+  func shuffle() -> Set<fruit> {
+    var set: Set<fruit>
     repeat {
-      set = createInitialCookies()
+      set = createInitialfruits()
       detectPossibleSwaps()
       print("possible swaps: \(possibleSwaps)")
     } while possibleSwaps.count == 0
@@ -57,53 +57,49 @@ class Level {
     return set
   }
   
-  private func createInitialCookies() -> Set<Cookie> {
-    var set: Set<Cookie> = []
-    
-    // 1
-    for row in 0..<numRows {
-      for column in 0..<numColumns {
+    private func createInitialfruits() -> Set<Fruit> {
+        var set: Set<Fruit> = []
         
-        // 2
-        if tiles[column, row] != nil {
-          var cookieType: CookieType
-          repeat {
-            cookieType = CookieType.random()
-          } while (column >= 2 &&
-            cookies[column - 1, row]?.cookieType == cookieType &&
-            cookies[column - 2, row]?.cookieType == cookieType)
-            || (row >= 2 &&
-              cookies[column, row - 1]?.cookieType == cookieType &&
-              cookies[column, row - 2]?.cookieType == cookieType)
-          
-          // 3
-          let cookie = Cookie(column: column, row: row, cookieType: cookieType)
-          cookies[column, row] = cookie
-          
-          // 4
-          set.insert(cookie)
+        for row in 0..<numRows {
+            for column in 0..<numColumns {
+                if tiles[column, row] != nil {
+                    var fruitType: FruitType
+                    repeat {
+                        fruitType = FruitType.allCases.randomElement()!
+                    } while (column >= 2 &&
+                        fruits[column - 1, row]?.fruitType == fruitType &&
+                        fruits[column - 2, row]?.fruitType == fruitType)
+                        || (row >= 2 &&
+                            fruits[column, row - 1]?.fruitType == fruitType &&
+                            fruits[column, row - 2]?.fruitType == fruitType)
+                    
+                    let fruit = Fruit(column: column, row: row, fruitType: fruitType)
+                    fruits[column, row] = fruit
+                    
+                    set.insert(fruit)
+                }
+            }
         }
-      }
+        return set
     }
-    return set
-  }
+
   
   private func hasChain(atColumn column: Int, row: Int) -> Bool {
-    let cookieType = cookies[column, row]!.cookieType
+    let FruitType = fruits[column, row]!.FruitType
     
     // Horizontal chain check
     var horizontalLength = 1
     
     // Left
     var i = column - 1
-    while i >= 0 && cookies[i, row]?.cookieType == cookieType {
+    while i >= 0 && fruits[i, row]?.FruitType == FruitType {
       i -= 1
       horizontalLength += 1
     }
     
     // Right
     i = column + 1
-    while i < numColumns && cookies[i, row]?.cookieType == cookieType {
+    while i < numColumns && fruits[i, row]?.FruitType == FruitType {
       i += 1
       horizontalLength += 1
     }
@@ -114,14 +110,14 @@ class Level {
     
     // Down
     i = row - 1
-    while i >= 0 && cookies[column, i]?.cookieType == cookieType {
+    while i >= 0 && fruits[column, i]?.FruitType == FruitType {
       i -= 1
       verticalLength += 1
     }
     
     // Up
     i = row + 1
-    while i < numRows && cookies[column, i]?.cookieType == cookieType {
+    while i < numRows && fruits[column, i]?.FruitType == FruitType {
       i += 1
       verticalLength += 1
     }
@@ -134,56 +130,56 @@ class Level {
     for row in 0..<numRows {
       for column in 0..<numColumns {
         if column < numColumns - 1,
-          let cookie = cookies[column, row] {
+          let fruit = fruits[column, row] {
           
-          // Have a cookie in this spot? If there is no tile, there is no cookie.
-          if let other = cookies[column + 1, row] {
+          // Have a fruit in this spot? If there is no tile, there is no fruit.
+          if let other = fruits[column + 1, row] {
             // Swap them
-            cookies[column, row] = other
-            cookies[column + 1, row] = cookie
+            fruits[column, row] = other
+            fruits[column + 1, row] = fruit
             
-            // Is either cookie now part of a chain?
+            // Is either fruit now part of a chain?
             if hasChain(atColumn: column + 1, row: row) ||
               hasChain(atColumn: column, row: row) {
-              set.insert(Swap(cookieA: cookie, cookieB: other))
+              set.insert(Swap(fruitA: fruit, fruitB: other))
             }
             
             // Swap them back
-            cookies[column, row] = cookie
-            cookies[column + 1, row] = other
+            fruits[column, row] = fruit
+            fruits[column + 1, row] = other
           }
           
           if row < numRows - 1,
-            let other = cookies[column, row + 1] {
-            cookies[column, row] = other
-            cookies[column, row + 1] = cookie
+            let other = fruits[column, row + 1] {
+            fruits[column, row] = other
+            fruits[column, row + 1] = fruit
             
-            // Is either cookie now part of a chain?
+            // Is either fruit now part of a chain?
             if hasChain(atColumn: column, row: row + 1) ||
               hasChain(atColumn: column, row: row) {
-              set.insert(Swap(cookieA: cookie, cookieB: other))
+              set.insert(Swap(fruitA: fruit, fruitB: other))
             }
             
             // Swap them back
-            cookies[column, row] = cookie
-            cookies[column, row + 1] = other
+            fruits[column, row] = fruit
+            fruits[column, row + 1] = other
           }
         }
-        else if column == numColumns - 1, let cookie = cookies[column, row] {
+        else if column == numColumns - 1, let fruit = fruits[column, row] {
           if row < numRows - 1,
-            let other = cookies[column, row + 1] {
-            cookies[column, row] = other
-            cookies[column, row + 1] = cookie
+            let other = fruits[column, row + 1] {
+            fruits[column, row] = other
+            fruits[column, row + 1] = fruit
             
-            // Is either cookie now part of a chain?
+            // Is either fruit now part of a chain?
             if hasChain(atColumn: column, row: row + 1) ||
               hasChain(atColumn: column, row: row) {
-              set.insert(Swap(cookieA: cookie, cookieB: other))
+              set.insert(Swap(fruitA: fruit, fruitB: other))
             }
             
             // Swap them back
-            cookies[column, row] = cookie
-            cookies[column, row + 1] = other
+            fruits[column, row] = fruit
+            fruits[column, row + 1] = other
           }
         }
       }
@@ -193,18 +189,18 @@ class Level {
   }
   
   func performSwap(_ swap: Swap) {
-    let columnA = swap.cookieA.column
-    let rowA = swap.cookieA.row
-    let columnB = swap.cookieB.column
-    let rowB = swap.cookieB.row
+    let columnA = swap.fruitA.column
+    let rowA = swap.fruitA.row
+    let columnB = swap.fruitB.column
+    let rowB = swap.fruitB.row
     
-    cookies[columnA, rowA] = swap.cookieB
-    swap.cookieB.column = columnA
-    swap.cookieB.row = rowA
+    fruits[columnA, rowA] = swap.fruitB
+    swap.fruitB.column = columnA
+    swap.fruitB.row = rowA
     
-    cookies[columnB, rowB] = swap.cookieA
-    swap.cookieA.column = columnB
-    swap.cookieA.row = rowB
+    fruits[columnB, rowB] = swap.fruitA
+    swap.fruitA.column = columnB
+    swap.fruitA.row = rowB
   }
   
   func isPossibleSwap(_ swap: Swap) -> Bool {
@@ -219,17 +215,17 @@ class Level {
       var column = 0
       while column < numColumns-2 {
         // 3
-        if let cookie = cookies[column, row] {
-          let matchType = cookie.cookieType
+        if let fruit = fruits[column, row] {
+          let matchType = fruit.FruitType
           // 4
-          if cookies[column + 1, row]?.cookieType == matchType &&
-            cookies[column + 2, row]?.cookieType == matchType {
+          if fruits[column + 1, row]?.FruitType == matchType &&
+            fruits[column + 2, row]?.FruitType == matchType {
             // 5
             let chain = Chain(chainType: .horizontal)
             repeat {
-              chain.add(cookie: cookies[column, row]!)
+              chain.add(fruit: fruits[column, row]!)
               column += 1
-            } while column < numColumns && cookies[column, row]?.cookieType == matchType
+            } while column < numColumns && fruits[column, row]?.FruitType == matchType
             
             set.insert(chain)
             continue
@@ -248,16 +244,16 @@ class Level {
     for column in 0..<numColumns {
       var row = 0
       while row < numRows-2 {
-        if let cookie = cookies[column, row] {
-          let matchType = cookie.cookieType
+        if let fruit = fruits[column, row] {
+          let matchType = fruit.FruitType
           
-          if cookies[column, row + 1]?.cookieType == matchType &&
-            cookies[column, row + 2]?.cookieType == matchType {
+          if fruits[column, row + 1]?.FruitType == matchType &&
+            fruits[column, row + 2]?.FruitType == matchType {
             let chain = Chain(chainType: .vertical)
             repeat {
-              chain.add(cookie: cookies[column, row]!)
+              chain.add(fruit: fruits[column, row]!)
               row += 1
-            } while row < numRows && cookies[column, row]?.cookieType == matchType
+            } while row < numRows && fruits[column, row]?.FruitType == matchType
             
             set.insert(chain)
             continue
@@ -273,8 +269,8 @@ class Level {
     let horizontalChains = detectHorizontalMatches()
     let verticalChains = detectVerticalMatches()
     
-    removeCookies(in: horizontalChains)
-    removeCookies(in: verticalChains)
+    removefruits(in: horizontalChains)
+    removefruits(in: verticalChains)
     
     calculateScores(for: horizontalChains)
     calculateScores(for: verticalChains)
@@ -282,31 +278,31 @@ class Level {
     return horizontalChains.union(verticalChains)
   }
   
-  private func removeCookies(in chains: Set<Chain>) {
+  private func removefruits(in chains: Set<Chain>) {
     for chain in chains {
-      for cookie in chain.cookies {
-        cookies[cookie.column, cookie.row] = nil
+      for fruit in chain.fruits {
+        fruits[fruit.column, fruit.row] = nil
       }
     }
   }
   
-  func fillHoles() -> [[Cookie]] {
-    var columns: [[Cookie]] = []
+  func fillHoles() -> [[fruit]] {
+    var columns: [[fruit]] = []
     // 1
     for column in 0..<numColumns {
-      var array = [Cookie]()
+      var array = [fruit]()
       for row in 0..<numRows {
         // 2
-        if tiles[column, row] != nil && cookies[column, row] == nil {
+        if tiles[column, row] != nil && fruits[column, row] == nil {
           // 3
           for lookup in (row + 1)..<numRows {
-            if let cookie = cookies[column, lookup] {
+            if let fruit = fruits[column, lookup] {
               // 4
-              cookies[column, lookup] = nil
-              cookies[column, row] = cookie
-              cookie.row = row
+              fruits[column, lookup] = nil
+              fruits[column, row] = fruit
+              fruit.row = row
               // 5
-              array.append(cookie)
+              array.append(fruit)
               // 6
               break
             }
@@ -321,28 +317,28 @@ class Level {
     return columns
   }
   
-  func topUpCookies() -> [[Cookie]] {
-    var columns: [[Cookie]] = []
-    var cookieType: CookieType = .unknown
+  func topUpfruits() -> [[fruit]] {
+    var columns: [[fruit]] = []
+    var FruitType: FruitType = .unknown
     
     for column in 0..<numColumns {
-      var array: [Cookie] = []
+      var array: [fruit] = []
       
       // 1
       var row = numRows - 1
-      while row >= 0 && cookies[column, row] == nil {
+      while row >= 0 && fruits[column, row] == nil {
         // 2
         if tiles[column, row] != nil {
           // 3
-          var newCookieType: CookieType
+          var newFruitType: FruitType
           repeat {
-            newCookieType = CookieType.random()
-          } while newCookieType == cookieType
-          cookieType = newCookieType
+            newFruitType = FruitType.random()
+          } while newFruitType == FruitType
+          FruitType = newFruitType
           // 4
-          let cookie = Cookie(column: column, row: row, cookieType: cookieType)
-          cookies[column, row] = cookie
-          array.append(cookie)
+          let fruit = fruit(column: column, row: row, FruitType: FruitType)
+          fruits[column, row] = fruit
+          array.append(fruit)
         }
         
         row -= 1

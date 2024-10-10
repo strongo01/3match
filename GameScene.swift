@@ -6,8 +6,8 @@ class GameScene: SKScene {
   let swapSound = SKAction.playSoundFileNamed("Chomp.wav", waitForCompletion: false)
   let invalidSwapSound = SKAction.playSoundFileNamed("Error.wav", waitForCompletion: false)
   let matchSound = SKAction.playSoundFileNamed("Ka-Ching.wav", waitForCompletion: false)
-  let fallingCookieSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false)
-  let addCookieSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
+  let fallingfruitSound = SKAction.playSoundFileNamed("Scrape.wav", waitForCompletion: false)
+  let addfruitSound = SKAction.playSoundFileNamed("Drip.wav", waitForCompletion: false)
   var level: Level!
   let tilesLayer = SKNode()
   let cropLayer = SKCropNode()
@@ -17,7 +17,7 @@ class GameScene: SKScene {
   let tileHeight: CGFloat = 36.0
   
   let gameLayer = SKNode()
-  let cookiesLayer = SKNode()
+  let fruitsLayer = SKNode()
   var swipeHandler: ((Swap) -> Void)?
   
   private var swipeFromColumn: Int?
@@ -48,20 +48,20 @@ class GameScene: SKScene {
     gameLayer.addChild(tilesLayer)
     gameLayer.addChild(cropLayer)
     
-    cookiesLayer.position = layerPosition
-    cropLayer.addChild(cookiesLayer)
+    fruitsLayer.position = layerPosition
+    cropLayer.addChild(fruitsLayer)
     let _ = SKLabelNode(fontNamed: "GillSans-BoldItalic")
   }
   
-  func addSprites(for cookies: Set<Cookie>) {
-    for cookie in cookies {
-      let sprite = SKSpriteNode(imageNamed: cookie.cookieType.spriteName)
+  func addSprites(for fruits: Set<fruit>) {
+    for fruit in fruits {
+      let sprite = SKSpriteNode(imageNamed: fruit.FruitType.spriteName)
       sprite.size = CGSize(width: tileWidth, height: tileHeight)
-      sprite.position = pointFor(column: cookie.column, row: cookie.row)
-      cookiesLayer.addChild(sprite)
-      cookie.sprite = sprite
+      sprite.position = pointFor(column: fruit.column, row: fruit.row)
+      fruitsLayer.addChild(sprite)
+      fruit.sprite = sprite
       
-      // Give each cookie sprite a small, random delay. Then fade them in.
+      // Give each fruit sprite a small, random delay. Then fade them in.
       sprite.alpha = 0
       sprite.xScale = 0.5
       sprite.yScale = 0.5
@@ -138,15 +138,15 @@ class GameScene: SKScene {
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     guard let touch = touches.first else { return }
     
-    let location = touch.location(in: cookiesLayer)
+    let location = touch.location(in: fruitsLayer)
     
     let (success, column, row) = convertPoint(location)
     
     if success {
-      if let cookie = level.cookie(atColumn: column, row: row) {
+      if let fruit = level.fruit(atColumn: column, row: row) {
         swipeFromColumn = column
         swipeFromRow = row
-        showSelectionIndicator(of: cookie)
+        showSelectionIndicator(of: fruit)
       }
     }
   }
@@ -157,7 +157,7 @@ class GameScene: SKScene {
     
     // 2
     guard let touch = touches.first else { return }
-    let location = touch.location(in: cookiesLayer)
+    let location = touch.location(in: fruitsLayer)
     
     let (success, column, row) = convertPoint(location)
     if success {
@@ -205,19 +205,19 @@ class GameScene: SKScene {
     guard toColumn >= 0 && toColumn < numColumns else { return }
     guard toRow >= 0 && toRow < numRows else { return }
     // 3
-    if let toCookie = level.cookie(atColumn: toColumn, row: toRow),
-      let fromCookie = level.cookie(atColumn: swipeFromColumn!, row: swipeFromRow!) {
+    if let tofruit = level.fruit(atColumn: toColumn, row: toRow),
+      let fromfruit = level.fruit(atColumn: swipeFromColumn!, row: swipeFromRow!) {
       // 4
       if let handler = swipeHandler {
-        let swap = Swap(cookieA: fromCookie, cookieB: toCookie)
+        let swap = Swap(fruitA: fromfruit, fruitB: tofruit)
         handler(swap)
       }
     }
   }
   
   func animate(_ swap: Swap, completion: @escaping () -> Void) {
-    let spriteA = swap.cookieA.sprite!
-    let spriteB = swap.cookieB.sprite!
+    let spriteA = swap.fruitA.sprite!
+    let spriteB = swap.fruitB.sprite!
     
     spriteA.zPosition = 100
     spriteB.zPosition = 90
@@ -237,8 +237,8 @@ class GameScene: SKScene {
   }
   
   func animateInvalidSwap(_ swap: Swap, completion: @escaping () -> Void) {
-    let spriteA = swap.cookieA.sprite!
-    let spriteB = swap.cookieB.sprite!
+    let spriteA = swap.fruitA.sprite!
+    let spriteB = swap.fruitB.sprite!
     
     spriteA.zPosition = 100
     spriteB.zPosition = 90
@@ -257,13 +257,13 @@ class GameScene: SKScene {
     run(invalidSwapSound)
   }
   
-  func showSelectionIndicator(of cookie: Cookie) {
+  func showSelectionIndicator(of fruit: fruit) {
     if selectionSprite.parent != nil {
       selectionSprite.removeFromParent()
     }
     
-    if let sprite = cookie.sprite {
-      let texture = SKTexture(imageNamed: cookie.cookieType.highlightedSpriteName)
+    if let sprite = fruit.sprite {
+      let texture = SKTexture(imageNamed: fruit.FruitType.highlightedSpriteName)
       selectionSprite.size = CGSize(width: tileWidth, height: tileHeight)
       selectionSprite.run(SKAction.setTexture(texture))
       
@@ -278,11 +278,11 @@ class GameScene: SKScene {
       SKAction.removeFromParent()]))
   }
   
-  func animateMatchedCookies(for chains: Set<Chain>, completion: @escaping () -> Void) {
+  func animateMatchedfruits(for chains: Set<Chain>, completion: @escaping () -> Void) {
     for chain in chains {
       animateScore(for: chain)
-      for cookie in chain.cookies {
-        if let sprite = cookie.sprite {
+      for fruit in chain.fruits {
+        if let sprite = fruit.sprite {
           if sprite.action(forKey: "removing") == nil {
             let scaleAction = SKAction.scale(to: 0.1, duration: 0.3)
             scaleAction.timingMode = .easeOut
@@ -296,16 +296,16 @@ class GameScene: SKScene {
     run(SKAction.wait(forDuration: 0.3), completion: completion)
   }
   
-  func animateFallingCookies(in columns: [[Cookie]], completion: @escaping () -> Void) {
+  func animateFallingfruits(in columns: [[fruit]], completion: @escaping () -> Void) {
     // 1
     var longestDuration: TimeInterval = 0
     for array in columns {
-      for (index, cookie) in array.enumerated() {
-        let newPosition = pointFor(column: cookie.column, row: cookie.row)
+      for (index, fruit) in array.enumerated() {
+        let newPosition = pointFor(column: fruit.column, row: fruit.row)
         // 2
         let delay = 0.05 + 0.15 * TimeInterval(index)
         // 3
-        let sprite = cookie.sprite!   // sprite always exists at this point
+        let sprite = fruit.sprite!   // sprite always exists at this point
         let duration = TimeInterval(((sprite.position.y - newPosition.y) / tileHeight) * 0.1)
         // 4
         longestDuration = max(longestDuration, duration + delay)
@@ -315,7 +315,7 @@ class GameScene: SKScene {
         sprite.run(
           SKAction.sequence([
             SKAction.wait(forDuration: delay),
-            SKAction.group([moveAction, fallingCookieSound])]))
+            SKAction.group([moveAction, fallingfruitSound])]))
       }
     }
     
@@ -323,7 +323,7 @@ class GameScene: SKScene {
     run(SKAction.wait(forDuration: longestDuration), completion: completion)
   }
   
-  func animateNewCookies(in columns: [[Cookie]], completion: @escaping () -> Void) {
+  func animateNewfruits(in columns: [[fruit]], completion: @escaping () -> Void) {
     // 1
     var longestDuration: TimeInterval = 0
     
@@ -331,20 +331,20 @@ class GameScene: SKScene {
       // 2
       let startRow = array[0].row + 1
       
-      for (index, cookie) in array.enumerated() {
+      for (index, fruit) in array.enumerated() {
         // 3
-        let sprite = SKSpriteNode(imageNamed: cookie.cookieType.spriteName)
+        let sprite = SKSpriteNode(imageNamed: fruit.FruitType.spriteName)
         sprite.size = CGSize(width: tileWidth, height: tileHeight)
-        sprite.position = pointFor(column: cookie.column, row: startRow)
-        cookiesLayer.addChild(sprite)
-        cookie.sprite = sprite
+        sprite.position = pointFor(column: fruit.column, row: startRow)
+        fruitsLayer.addChild(sprite)
+        fruit.sprite = sprite
         // 4
         let delay = 0.1 + 0.2 * TimeInterval(array.count - index - 1)
         // 5
-        let duration = TimeInterval(startRow - cookie.row) * 0.1
+        let duration = TimeInterval(startRow - fruit.row) * 0.1
         longestDuration = max(longestDuration, duration + delay)
         // 6
-        let newPosition = pointFor(column: cookie.column, row: cookie.row)
+        let newPosition = pointFor(column: fruit.column, row: fruit.row)
         let moveAction = SKAction.move(to: newPosition, duration: duration)
         moveAction.timingMode = .easeOut
         sprite.alpha = 0
@@ -354,7 +354,7 @@ class GameScene: SKScene {
             SKAction.group([
               SKAction.fadeIn(withDuration: 0.05),
               moveAction,
-              addCookieSound])
+              addfruitSound])
             ]))
       }
     }
@@ -364,8 +364,8 @@ class GameScene: SKScene {
   
   func animateScore(for chain: Chain) {
     // Figure out what the midpoint of the chain is.
-    let firstSprite = chain.firstCookie().sprite!
-    let lastSprite = chain.lastCookie().sprite!
+    let firstSprite = chain.firstfruit().sprite!
+    let lastSprite = chain.lastfruit().sprite!
     let centerPosition = CGPoint(
       x: (firstSprite.position.x + lastSprite.position.x)/2,
       y: (firstSprite.position.y + lastSprite.position.y)/2 - 8)
@@ -376,7 +376,7 @@ class GameScene: SKScene {
     scoreLabel.text = String(format: "%ld", chain.score)
     scoreLabel.position = centerPosition
     scoreLabel.zPosition = 300
-    cookiesLayer.addChild(scoreLabel)
+    fruitsLayer.addChild(scoreLabel)
     
     let moveAction = SKAction.move(by: CGVector(dx: 0, dy: 3), duration: 0.7)
     moveAction.timingMode = .easeOut
@@ -397,7 +397,7 @@ class GameScene: SKScene {
     gameLayer.run(action, completion: completion)
   }
   
-  func removeAllCookieSprites() {
-    cookiesLayer.removeAllChildren()
+  func removeAllfruitSprites() {
+    fruitsLayer.removeAllChildren()
   }
 }
